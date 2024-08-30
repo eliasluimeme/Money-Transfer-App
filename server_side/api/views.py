@@ -10,9 +10,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from rest_framework import permissions
 from django.db import transaction
-from .serializers import TransactionSerializer
+from .serializers import TransactionSerializer, BalanceSerializer
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
+from decimal import Decimal
 
 
 
@@ -198,9 +199,31 @@ class AgentAvailabilityViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Availability updated'})
     
 class BalanceViewSet(viewsets.ModelViewSet):
-    @action(detail=False, methods=['put'])
+    queryset = Balance.objects.all()
+    serializer_class = BalanceSerializer
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    @action(detail=False, methods=['put'], permission_classes=[IsAuthenticated])
     def add(self, request):
-        availability, created = AgentAvailability.objects.get_or_create(agent=request.user)
-        availability.status = request.data.get('status', 'OFFLINE')
-        availability.save()
-        return Response({'message': 'Availability updated'})
+        amount_to_add = request.data.get('amount')
+        
+        if amount_to_add is None:
+            return Response({'error': 'Amount not provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            amount_to_add = Decimal(amount_to_add)
+            if amount_to_add <= 0:
+                raise ValueError("Amount must be positive")
+
+            user_balance = Balance.objects.get(user=request.user)
+            user_balance.amount += amount_to_add
+            user_balance.save()
+
+            return Response({'message': 'Balance updated successfully', 'balance': user_balance.amount})
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Balance.DoesNotExist:
+            return Response({'error': 'Balance does not exist for this user'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

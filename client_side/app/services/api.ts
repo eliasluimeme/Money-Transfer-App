@@ -43,7 +43,7 @@ export const api = {
   },
 
   async addToBalance(amount: number): Promise<Transaction> {
-    const response = await axiosInstance.put('/balance/add', { amount });
+    const response = await axiosInstance.put('/balance/add/', { amount });
     return response.data;
   },
 };

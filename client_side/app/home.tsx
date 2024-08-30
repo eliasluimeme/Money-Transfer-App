@@ -88,8 +88,8 @@ export default function Home() {
               placeholder="Amount to add"
               required
               className="input"
-              step="0.01"
-              min="0.01"
+              step="1"
+              min="10"
             />
             <button type="submit" className="btn">Add to Balance</button>
           </form>
