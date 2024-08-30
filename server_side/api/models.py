@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class User(AbstractUser):
     ROLES = (
@@ -8,6 +12,7 @@ class User(AbstractUser):
         ('AGENT', 'Agent'),
     )
     role = models.CharField(max_length=20, choices=ROLES, default='SENDER')
+    # balance = models.OneToOneField(Balance, on_delete=models.CASCADE, null=True)
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -26,6 +31,13 @@ class User(AbstractUser):
         related_query_name='custom_user',
     )
 
+class Balance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='balance')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.user.username}'s balance: {self.amount}"
+
 class Transaction(models.Model):
     STATUSES = (
         ('PENDING', 'Pending'),
@@ -40,6 +52,22 @@ class Transaction(models.Model):
     status = models.CharField(max_length=20, choices=STATUSES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def confirm(self, agent):
+        if self.status != 'PENDING':
+            raise ValueError("Only PENDING transactions can be confirmed")
+        self.agent = agent
+        self.status = 'PROCESSING'
+        self.save()
+
+    def complete(self):
+        if self.status != 'PROCESSING':
+            raise ValueError("Only PROCESSING transactions can be completed")
+        self.status = 'COMPLETED'
+        self.save()
+        escrow = self.escrow
+        escrow.status = 'RELEASED'
+        escrow.save()
 
 class Escrow(models.Model):
     STATUSES = (
@@ -61,3 +89,12 @@ class AgentAvailability(models.Model):
     agent = models.OneToOneField(User, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUSES, default='OFFLINE')
     last_updated = models.DateTimeField(auto_now=True)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_balance(sender, instance, created, **kwargs):
+    if created:
+        Balance.objects.create(user=instance)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_balance(sender, instance, **kwargs):
+    instance.balance.save()

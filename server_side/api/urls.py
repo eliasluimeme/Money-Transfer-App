@@ -12,4 +12,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/register/', UserViewSet.as_view({'post': 'register'}), name='user-register'),
     path('users/login/', UserViewSet.as_view({'post': 'login'}), name='user-login'),
+    # path('transactions/', TransactionViewSet.as_view({'post': 'transactions'}), name='transactions'),
 ]

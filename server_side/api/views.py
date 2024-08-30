@@ -4,12 +4,20 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .models import User, Transaction
+from .models import User, Transaction, Escrow, AgentAvailability, Balance
 from .serializers import UserSerializer, TransactionSerializer, AgentAvailabilitySerializer
-from .models import AgentAvailability
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from rest_framework import permissions
+from django.db import transaction
+from .serializers import TransactionSerializer
+from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
+
+
 
 class UserViewSet(viewsets.ModelViewSet):
+    User = get_user_model()
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -17,30 +25,34 @@ class UserViewSet(viewsets.ModelViewSet):
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            print("hereeee")
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            print("user", user)
-            print("token", refresh)
-            return Response({
-                'user': serializer.data, 
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                with transaction.atomic():
+                    user = serializer.save()
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'user': UserSerializer(user).data, 
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                }, status=status.HTTP_201_CREATED)
+            except IntegrityError as e:
+                return Response({'error': 'A user with this username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
+
         user = authenticate(request, username=username, password=password)
-        print('user', user)
-        
+
         if user:
             refresh = RefreshToken.for_user(user)
-            print("token", refresh)
             return Response({
                 'user': UserSerializer(user).data,
                 'tokens': {
@@ -55,14 +67,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
-    # @action(detail=False, methods=['post'])
-    # def register(self, request):
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         user = serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     @action(detail=False, methods=['put'])
     def switch_role(self, request):
         user = request.user
@@ -72,37 +76,111 @@ class UserViewSet(viewsets.ModelViewSet):
             user.save()
             return Response({'message': 'Role updated successfully'})
         return Response({'error': 'Invalid role'}, status=status.HTTP_400_BAD_REQUEST)
+    
+class IsAgent(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role == 'AGENT'
+
+class IsSenderOrAgent(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.sender == request.user or request.user.role == 'AGENT'
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        transaction = serializer.save(sender=self.request.user)
-        Escrow.objects.create(transaction=transaction, amount=transaction.amount)
+    def get_permissions(self):
+        if self.action in ['confirm', 'complete']:
+            self.permission_classes = [IsAuthenticated, IsAgent]
+        elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsAuthenticated, IsSenderOrAgent]
+        return super().get_permissions()
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        try:
+            print("Performing create with data:", serializer.validated_data)
+            amount = serializer.validated_data.get('amount')
+            user = self.request.user
+            
+            # Fetch the user's balance
+            try:
+                user_balance = Balance.objects.get(user=user)
+            except Balance.DoesNotExist:
+                raise ValidationError("User has no balance")
+
+            if user_balance.amount < amount:
+                raise ValidationError("Insufficient balance")
+
+            # Save the transaction
+            transaction = serializer.save(
+                sender=user,
+                status='PENDING'
+            )
+
+            # Create the escrow
+            Escrow.objects.create(transaction=transaction, amount=amount, status='HELD')
+
+            # Update the user's balance
+            user_balance.amount -= amount
+            user_balance.save()
+
+            print(f"Transaction created: {transaction.id}, New balance: {user_balance.amount}")
+            return transaction
+        except ValidationError as e:
+            print(f"Validation error: {str(e)}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            raise ValidationError("An unexpected error occurred")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    @transaction.atomic
     @action(detail=True, methods=['put'])
     def confirm(self, request, pk=None):
         transaction = self.get_object()
-        if transaction.status == 'PENDING' and request.user.role == 'AGENT':
-            transaction.agent = request.user
-            transaction.status = 'PROCESSING'
-            transaction.save()
-            return Response({'message': 'Transaction confirmed'})
-        return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+        if transaction.status != 'PENDING':
+            return Response({'error': 'Transaction is not in PENDING state'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        transaction.agent = request.user
+        transaction.status = 'PROCESSING'
+        transaction.save()
+        return Response({'message': 'Transaction confirmed'})
 
+    @transaction.atomic
     @action(detail=True, methods=['put'])
     def complete(self, request, pk=None):
         transaction = self.get_object()
-        if transaction.status == 'PROCESSING' and request.user == transaction.agent:
-            transaction.status = 'COMPLETED'
-            transaction.save()
-            escrow = Escrow.objects.get(transaction=transaction)
-            escrow.status = 'RELEASED'
-            escrow.save()
-            return Response({'message': 'Transaction completed'})
-        return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+        if transaction.status != 'PROCESSING':
+            return Response({'error': 'Transaction is not in PROCESSING state'}, status=status.HTTP_400_BAD_REQUEST)
+        if request.user != transaction.agent:
+            return Response({'error': 'Only the assigned agent can complete this transaction'}, status=status.HTTP_403_FORBIDDEN)
+        
+        transaction.status = 'COMPLETED'
+        transaction.save()
+        
+        escrow = Escrow.objects.get(transaction=transaction)
+        escrow.status = 'RELEASED'
+        escrow.save()
+        return Response({'message': 'Transaction completed'})
+
+    def destroy(self, request, *args, **kwargs):
+        transaction = self.get_object()
+        if transaction.status != 'PENDING':
+            return Response({'error': 'Only PENDING transactions can be cancelled'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
 
 class AgentAvailabilityViewSet(viewsets.ModelViewSet):
     queryset = AgentAvailability.objects.all()
@@ -114,6 +192,14 @@ class AgentAvailabilityViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['put'])
     def set_availability(self, request):
+        availability, created = AgentAvailability.objects.get_or_create(agent=request.user)
+        availability.status = request.data.get('status', 'OFFLINE')
+        availability.save()
+        return Response({'message': 'Availability updated'})
+    
+class BalanceViewSet(viewsets.ModelViewSet):
+    @action(detail=False, methods=['put'])
+    def add(self, request):
         availability, created = AgentAvailability.objects.get_or_create(agent=request.user)
         availability.status = request.data.get('status', 'OFFLINE')
         availability.save()
