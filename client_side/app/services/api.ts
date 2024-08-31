@@ -1,4 +1,3 @@
-// services/api.ts
 import axios from 'axios';
 import { User, Transaction, AuthTokens } from '../types';
 
@@ -44,6 +43,11 @@ export const api = {
 
   async addToBalance(amount: number): Promise<Transaction> {
     const response = await axiosInstance.put('/balance/add/', { amount });
+    return response.data;
+  },
+
+  async acceptTransaction(transactionId: number): Promise<Transaction> {
+    const response = await axiosInstance.put(`/transactions/${transactionId}/accept/`);
     return response.data;
   },
 };

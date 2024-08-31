@@ -14,6 +14,8 @@ from .serializers import TransactionSerializer, BalanceSerializer
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 from decimal import Decimal
+from django.db.models import Q
+from rest_framework import generics
 
 
 
@@ -98,46 +100,44 @@ class TransactionViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthenticated, IsSenderOrAgent]
         return super().get_permissions()
 
+    def get_queryset(self):
+        user = self.request.user
+        return Transaction.objects.filter(
+            Q(sender=user) | Q(receiver=user) | Q(agent=user)
+        ).order_by('-created_at')
+
     @transaction.atomic
     def perform_create(self, serializer):
+        amount = serializer.validated_data.get('amount')
+        user = self.request.user
+        
+        # Fetch the user's balance
         try:
-            print("Performing create with data:", serializer.validated_data)
-            amount = serializer.validated_data.get('amount')
-            user = self.request.user
-            
-            # Fetch the user's balance
-            try:
-                user_balance = Balance.objects.get(user=user)
-            except Balance.DoesNotExist:
-                raise ValidationError("User has no balance")
+            user_balance = Balance.objects.get(user=user)
+        except Balance.DoesNotExist:
+            raise ValidationError("User has no balance")
+        
+        if user_balance.amount < amount:
+            raise ValidationError("Insufficient balance")
+        
+        # Save the transaction
+        transaction = serializer.save(
+            sender=user,
+            status='PENDING'
+        )
 
-            if user_balance.amount < amount:
-                raise ValidationError("Insufficient balance")
+        # Create the escrow
+        Escrow.objects.create(transaction=transaction, amount=transaction.amount, status='HELD')
 
-            # Save the transaction
-            transaction = serializer.save(
-                sender=user,
-                status='PENDING'
-            )
+        # Update the user's balance
+        user_balance = Balance.objects.get(user=transaction.sender)
+        user_balance.amount -= transaction.amount
+        user_balance.save()
 
-            # Create the escrow
-            Escrow.objects.create(transaction=transaction, amount=amount, status='HELD')
-
-            # Update the user's balance
-            user_balance.amount -= amount
-            user_balance.save()
-
-            print(f"Transaction created: {transaction.id}, New balance: {user_balance.amount}")
-            return transaction
-        except ValidationError as e:
-            print(f"Validation error: {str(e)}")
-            raise
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-            raise ValidationError("An unexpected error occurred")
+        return transaction
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         try:
             self.perform_create(serializer)
@@ -145,8 +145,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
     @transaction.atomic
     @action(detail=True, methods=['put'])
@@ -175,14 +173,25 @@ class TransactionViewSet(viewsets.ModelViewSet):
         escrow = Escrow.objects.get(transaction=transaction)
         escrow.status = 'RELEASED'
         escrow.save()
+
+        receiver_balance = Balance.objects.get(user=transaction.receiver)
+        receiver_balance.amount += transaction.amount
         return Response({'message': 'Transaction completed'})
 
     def destroy(self, request, *args, **kwargs):
         transaction = self.get_object()
         if transaction.status != 'PENDING':
             return Response({'error': 'Only PENDING transactions can be cancelled'}, status=status.HTTP_400_BAD_REQUEST)
-        return super().destroy(request, *args, **kwargs)
+        
+        escrow = Escrow.objects.get(transaction=transaction)
+        escrow.delete()
 
+        sender_balance = Balance.objects.get(user=transaction.sender)
+        sender_balance.amount += transaction.amount
+        sender_balance.save()
+
+        return super().destroy(request, *args, **kwargs)
+    
 class AgentAvailabilityViewSet(viewsets.ModelViewSet):
     queryset = AgentAvailability.objects.all()
     serializer_class = AgentAvailabilitySerializer

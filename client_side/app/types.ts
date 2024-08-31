@@ -13,7 +13,9 @@ export interface User {
 export interface Transaction {
   id: number;
   sender: number;
+  sender_username: string;
   receiver: number;
+  receiver_username: string;
   agent: number | null;
   amount: number;
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
