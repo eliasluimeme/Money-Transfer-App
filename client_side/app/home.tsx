@@ -63,8 +63,8 @@ export default function Home() {
       const transactions = await api.getTransactions();
       setTransactions(transactions);
 
-      const pendingTransactions: Transaction[] = transactions.filter(transaction => transaction.status === 'PENDING')
-      setPendingTransactions(pendingTransactions);
+      // const pendingTransactions: Transaction[] = transactions.filter(transaction => transaction.status === 'PENDING')
+      // setPendingTransactions(pendingTransactions);
 
       // Refresh user data
       const updatedUserData = await api.getProfile();
@@ -130,70 +130,51 @@ export default function Home() {
               const isReceiver = transaction.receiver === user.id;
           
               return (
-                <li key={transaction.id} className="border-b pb-2">
-                  {isSender && (
-                    <div className="flex items-center justify-between pb-4">
-                      <p>Sent <span className="font-bold">${transaction.amount}</span> to <span className="font-bold">{transaction.receiver_username}</span></p>
-                      <button 
-                        // onClick={}
-                        className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded cursor-not-allowed opacity-50"                      disabled={true}
-                      >
-                        Pending
-                      </button>
-                    </div>
+                <div key={transaction.id} className="">
+                  {isSender && !isReceiver && transaction.status === "PENDING" && (
+                    <li key={transaction.id} className="border-b pb-2">
+                      <div className="flex items-center justify-between pb-4">
+                        <p>Sent <span className="font-bold">${transaction.amount}</span> to <span className="font-bold">{transaction.receiver_username}</span></p>
+                        <button 
+                            // onClick={}
+                            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded cursor-not-allowed opacity-50 w-30"                      disabled={true}
+                          >
+                            Pending
+                          </button>
+                      </div>
+                    </li>
                   )}
-                  {isReceiver && !isSender && (
-                    <div className="flex items-center justify-between pb-4">
-                      <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
-                      <button 
-                        onClick={() => acceptTransaction(transaction.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-                      >
-                        Accept
-                      </button>
-                    </div>
+                  {isReceiver && !isSender && transaction.status === "PENDING" && (
+                    <li key={transaction.id} className="border-b pb-2">
+                      <div className="flex items-center justify-between pb-4">
+                        <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
+                        <button 
+                          onClick={() => acceptTransaction(transaction.id)}
+                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-7 rounded w-30"
+                        >
+                          Accept
+                        </button>
+                      </div>
+                    </li>
                   )}
-                </li>
+                  { transaction.status === "COMPLETED" && (
+                    <li key={transaction.id} className="border-b pb-2">
+                      <div className="flex items-center justify-between pb-4">
+                        <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
+                        <button 
+                          // onClick={() => acceptTransaction(transaction.id)}
+                          className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded w-30 cursor-not-allowed"
+                        >
+                          Completed
+                        </button>
+                      </div>
+                    </li>
+                  )}
+                </div>
               );
             })}
           </ul>
         </section>
-        {/* <section className="bg-white shadow-md rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold mb-4">Pending Transactions</h3>
-          {pendingTransactions.length === 0 ? (
-            <p>No pending transactions.</p>
-          ) : (
-            <ul className="space-y-4">
-              {pendingTransactions
-                .filter(transaction => transaction.receiver === user.id)
-                .map(transaction => (
-                  <li key={transaction.id} className="flex items-center justify-between border-b pb-4">
-                    <span>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></span>
-                    <button 
-                      onClick={() => acceptTransaction(transaction.id)}
-                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-                    >
-                      Accept
-                    </button>
-                  </li>
-              ))}
-              {pendingTransactions
-                .filter(transaction => transaction.receiver != user.id)
-                .map(transaction => (
-                  <li key={transaction.id} className="flex items-center justify-between border-b pb-4">
-                    <span>Sent <span className="font-bold">${transaction.amount}</span> to <span className="font-bold">{transaction.receiver_username}</span></span>
-                    <button 
-                      // onClick={}
-                      className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded cursor-not-allowed opacity-50"                      disabled={true}
-                    >
-                      Pending
-                    </button>
-                  </li>
-                ))}
-            </ul>
-            
-          )}
-        </section> */}
         <section className="bg-white shadow-md rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Create Transaction</h3>
           <form onSubmit={(e) => {

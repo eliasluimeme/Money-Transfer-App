@@ -95,9 +95,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['confirm', 'complete']:
-            self.permission_classes = [IsAuthenticated, IsAgent]
+            self.permission_classes = [IsAuthenticated,]
         elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
-            self.permission_classes = [IsAuthenticated, IsSenderOrAgent]
+            self.permission_classes = [IsAuthenticated,]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -139,6 +139,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
+
         try:
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
@@ -150,18 +151,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['put'])
     def confirm(self, request, pk=None):
         transaction = self.get_object()
+
         if transaction.status != 'PENDING':
             return Response({'error': 'Transaction is not in PENDING state'}, status=status.HTTP_400_BAD_REQUEST)
         
         transaction.agent = request.user
-        transaction.status = 'PROCESSING'
+        transaction.status = 'COMPLETED'
         transaction.save()
+
         return Response({'message': 'Transaction confirmed'})
 
     @transaction.atomic
     @action(detail=True, methods=['put'])
     def complete(self, request, pk=None):
         transaction = self.get_object()
+
         if transaction.status != 'PROCESSING':
             return Response({'error': 'Transaction is not in PROCESSING state'}, status=status.HTTP_400_BAD_REQUEST)
         if request.user != transaction.agent:

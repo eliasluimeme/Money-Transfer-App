@@ -47,7 +47,7 @@ export const api = {
   },
 
   async acceptTransaction(transactionId: number): Promise<Transaction> {
-    const response = await axiosInstance.put(`/transactions/${transactionId}/accept/`);
+    const response = await axiosInstance.put(`/transactions/${transactionId}/confirm/`);
     return response.data;
   },
 };
