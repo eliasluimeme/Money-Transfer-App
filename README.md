@@ -70,6 +70,7 @@ f. Reporting and Analytics:
 
 ## Database Schema:
 
+```sql
 -- Users Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -79,7 +80,9 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
+```sql
 -- Transactions Table
 CREATE TABLE transactions (
     id SERIAL PRIMARY KEY,
@@ -91,7 +94,9 @@ CREATE TABLE transactions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
+```sql
 -- Escrow Table
 CREATE TABLE escrow (
     id SERIAL PRIMARY KEY,
@@ -101,7 +106,9 @@ CREATE TABLE escrow (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     released_at TIMESTAMP
 );
+```
 
+```sql
 -- Agent Availability Table
 CREATE TABLE agent_availability (
     id SERIAL PRIMARY KEY,
@@ -109,6 +116,7 @@ CREATE TABLE agent_availability (
     status VARCHAR(20) NOT NULL,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
 ## API Design:
 
