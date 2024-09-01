@@ -13,9 +13,6 @@ cd yourproject
 2. Docker Compose
 The project includes a docker-compose.yml file that defines the services:
 
-web: The Next.js frontend.
-backend: The Django backend.
-db: The PostgreSQL database.
 To build and start the services, run:
 
 ```bash
@@ -23,7 +20,6 @@ docker-compose up --build
 ```
 
 This command will:
-
 Build the Docker images for the frontend and backend.
 Start the containers for the frontend, backend, and PostgreSQL database.
 
@@ -34,11 +30,10 @@ Once the services are up, you need to apply the Django migrations to set up the 
 docker-compose exec backend python manage.py migrate
 ```
 
-
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Architecture Overview:
 
-### 1. Architecture Overview:
 The system will follow a microservices architecture with the following main components:
 * Backend: Python Django REST Framework
 * Frontend: Next.js
@@ -53,7 +48,8 @@ Data flow:
 3. Backend processes requests, interacts with the database, and returns responses
 4. Component Breakdown:
 
-#### User Management:
+## User Management:
+
 * Handles user registration, authentication, and profile management
 * Manages user roles (sender, receiver, agent)
 b. Transaction Management:
@@ -72,7 +68,7 @@ f. Reporting and Analytics:
 * Generates reports on transaction volumes, user activity, etc.
 * Provides insights for business intelligence
 
-#### Database Schema:
+## Database Schema:
 
 -- Users Table
 CREATE TABLE users (
@@ -114,7 +110,8 @@ CREATE TABLE agent_availability (
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-#### API Design:
+## API Design:
+
 a. User Management:
 * POST /api/users/register - Register a new user
 * POST /api/users/login - User login
