@@ -52,23 +52,33 @@ Data flow:
 3. Backend processes requests, interacts with the database, and returns responses
 4. Component Breakdown:
 
-## User Management:
+User Management:
 
 * Handles user registration, authentication, and profile management
 * Manages user roles (sender, receiver, agent)
-b. Transaction Management:
+
+Transaction Management:
+
 * Creates and processes money transfer transactions
 * Tracks transaction status and history
-c. Escrow System: 
+
+Escrow System:
+
 * Manages temporary holding of funds during transactions
 * Ensures secure fund transfers between parties
-d. Agent Matching:
+
+Agent Matching:
+
 * Assigns available agents to transactions
 * Manages agent availability and workload
-e. Notification Service:
+
+Notification Service:
+
 * Sends notifications to users about transaction status updates
 * Handles email and SMS notifications
-f. Reporting and Analytics:
+
+Reporting and Analytics:
+
 * Generates reports on transaction volumes, user activity, etc.
 * Provides insights for business intelligence
 
