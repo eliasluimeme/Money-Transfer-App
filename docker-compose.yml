@@ -1,30 +1,30 @@
 version: '3.8'
 
 services:
-  # frontend:
-  #   build:
-  #     context: ./front
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   env_file:
-  #     - ./front/.env
-  #   volumes:
-  #     - ./front/src:/src/src
-  #   depends_on:
-  #     - backend
+  frontend:
+    build:
+      context: ./client_side
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    # env_file:
+    #   - ./.env
+    volumes:
+      - ./client_side/app:/src/src
+    depends_on:
+      - backend
 
-  # backend:
-  #   build: ./django_backend
-  #   command: python manage.py runserver 0.0.0.0:8000
-  #   volumes:
-  #     - ./django_backend/:/usr/src/django_backend/
-  #   ports:
-  #     - 8000:8000
-  #   env_file:
-  #     - ./.env.dev
-  #   depends_on:
-  #     - db
+  backend:
+    build: ./server_side
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./server_side/:/usr/src/server_side/
+    ports:
+      - 8000:8000
+    # env_file:
+    #   - ./.env.dev
+    depends_on:
+      - db
 
   db:
     image: postgres:15
