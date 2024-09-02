@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, Transaction } from './types';
 import { api } from './services/api';
 
-export default function Home() {
+export default function MoneyTransferApp() {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
@@ -21,7 +21,7 @@ export default function Home() {
         const transactions = await api.getTransactions();
         setTransactions(transactions);
 
-        const pendingTransactions: Transaction[] = transactions.filter(transaction => transaction.status === 'PENDING')
+        const pendingTransactions: Transaction[] = transactions.filter(transaction => transaction.status === 'PENDING');
         setPendingTransactions(pendingTransactions);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -59,20 +59,13 @@ export default function Home() {
     try {
       await api.acceptTransaction(transactionId);
       
-      // Refresh pending transactions
-      const transactions = await api.getTransactions();
-      setTransactions(transactions);
-
-      // const pendingTransactions: Transaction[] = transactions.filter(transaction => transaction.status === 'PENDING')
-      // setPendingTransactions(pendingTransactions);
+      // Refresh transactions
+      const transactionsData = await api.getTransactions();
+      setTransactions(transactionsData);
 
       // Refresh user data
       const updatedUserData = await api.getProfile();
       setUser(updatedUserData);
-
-      // Refresh transactions
-      const transactionsData = await api.getTransactions();
-      setTransactions(transactionsData);
     } catch (error) {
       console.error('Error accepting transaction:', error);
     }
@@ -85,18 +78,22 @@ export default function Home() {
   };
 
   if (!user) {
-    return <p className="text-center text-lg mt-8">Loading...</p>;
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <p className="text-lg font-medium">Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-purple-600 text-white p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Money Transfer App</h1>
+      <header className="bg-purple-600 text-white p-4 md:p-6 flex justify-between items-center">
+        <h1 className="text-2xl md:text-3xl font-bold">Money Transfer App</h1>
         <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
           Logout
         </button>
       </header>
-      <main className="container mx-auto mt-8 px-4">
+      <main className="container mx-auto mt-8 px-4 md:px-6">
         <section className="bg-white shadow-md rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-2">Welcome, {user.username}</h2>
           <p className="text-lg">Balance: ${user.balance.amount}</p>
@@ -106,74 +103,63 @@ export default function Home() {
           <form onSubmit={(e) => {
             e.preventDefault();
             addToBalance(parseFloat(addAmount));
-          }} className="flex gap-4">
+          }} className="flex gap-4 flex-col md:flex-row">
             <input
               type="number"
               value={addAmount}
               onChange={(e) => setAddAmount(e.target.value)}
               placeholder="Amount to add"
               required
-              className="flex-grow border rounded p-2"
+              className="flex-grow border rounded p-2 mb-4 md:mb-0"
               step="1"
               min="10"
             />
-            <button type="submit" className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+            <button type="submit" className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded w-full md:w-auto">
               Add to Balance
             </button>
           </form>
         </section>
         <section className="bg-white shadow-md rounded-lg p-6 mb-8">
           <h3 className="text-lg font-semibold mb-4">Transactions</h3>
-          <ul className="space-y-2">
+          <div className="space-y-4">
             {transactions.map(transaction => {
               const isSender = transaction.sender === user.id;
               const isReceiver = transaction.receiver === user.id;
-          
               return (
-                <div key={transaction.id} className="">
+                <div key={transaction.id} className="border-b pb-4 last:border-b-0 last:pb-0">
                   {isSender && !isReceiver && transaction.status === "PENDING" && (
-                    <li key={transaction.id} className="border-b pb-2">
-                      <div className="flex items-center justify-between pb-4">
-                        <p>Sent <span className="font-bold">${transaction.amount}</span> to <span className="font-bold">{transaction.receiver_username}</span></p>
-                        <button 
-                            // onClick={}
-                            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded cursor-not-allowed opacity-50 w-30"                      disabled={true}
-                          >
-                            Pending
-                          </button>
-                      </div>
-                    </li>
+                    <div className="flex items-center justify-between">
+                      <p>Sent <span className="font-bold">${transaction.amount}</span> to <span className="font-bold">{transaction.receiver_username}</span></p>
+                      <button className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded cursor-not-allowed opacity-50 w-32">
+                        Pending
+                      </button>
+                    </div>
                   )}
                   {isReceiver && !isSender && transaction.status === "PENDING" && (
-                    <li key={transaction.id} className="border-b pb-2">
-                      <div className="flex items-center justify-between pb-4">
-                        <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
-                        <button 
-                          onClick={() => acceptTransaction(transaction.id)}
-                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-7 rounded w-30"
-                        >
-                          Accept
-                        </button>
-                      </div>
-                    </li>
+                    <div className="flex items-center justify-between">
+                      <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
+                      <button
+                        onClick={() => acceptTransaction(transaction.id)}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-7 rounded w-32"
+                      >
+                        Accept
+                      </button>
+                    </div>
                   )}
-                  { transaction.status === "COMPLETED" && (
-                    <li key={transaction.id} className="border-b pb-2">
-                      <div className="flex items-center justify-between pb-4">
-                        <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
-                        <button 
-                          // onClick={() => acceptTransaction(transaction.id)}
-                          className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded w-30 cursor-not-allowed"
-                        >
-                          Completed
-                        </button>
-                      </div>
-                    </li>
+                  {transaction.status === "COMPLETED" && (
+                    <div className="flex items-center justify-between">
+                      <p>Received <span className="font-bold">${transaction.amount}</span> from <span className="font-bold">{transaction.sender_username}</span></p>
+                      <button
+                        className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded w-32 cursor-not-allowed"
+                      >
+                        Completed
+                      </button>
+                    </div>
                   )}
                 </div>
               );
             })}
-          </ul>
+          </div>
         </section>
         <section className="bg-white shadow-md rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Create Transaction</h3>
