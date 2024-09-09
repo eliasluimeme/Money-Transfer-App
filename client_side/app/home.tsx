@@ -22,6 +22,7 @@ import {
 import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, Send, PlusCircle, Home, History, Settings, LogOut, Bell } from 'lucide-react'
 import Sidebar from '@/components/sidebar/sidebar'
 import SendMoneyModal from '@/components/modals/sendMoneyModal'
+import AddMoneyModal from '@/components/modals/addMoneyModal'
 
 export default function MoneyTransferApp() {
   const [user, setUser] = useState<User | null>(null)
@@ -51,7 +52,7 @@ export default function MoneyTransferApp() {
 
   const addToBalance = async (amount: number) => {
     try {
-      await api.addToBalance(amount)
+      await api.addToBalance(amount, "card")
       const updatedUserData = await api.getProfile()
       setUser(updatedUserData)
       setAddAmount('')
@@ -82,6 +83,17 @@ export default function MoneyTransferApp() {
     } catch (error) {
       console.error('Error sending money:', error)
       throw error // Re-throw the error to be handled in the modal
+    }
+  }
+
+  const handleAddMoney = async (amount: number, method: string) => {
+    try {
+      await api.addToBalance(amount, method)
+      const updatedUserData = await api.getProfile()
+      setUser(updatedUserData)
+    } catch (error) {
+      console.error('Error adding money:', error)
+      throw error
     }
   }
 
@@ -201,10 +213,7 @@ export default function MoneyTransferApp() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <SendMoneyModal onSendMoney={handleSendMoney} currentBalance={parseInt(user.balance.amount)} />
-                  <Button className="h-24 flex-col" variant="outline" onClick={() => {}}>
-                    <PlusCircle className="w-6 h-6 mb-2" />
-                    Add Money
-                  </Button>
+                  <AddMoneyModal onAddMoney={handleAddMoney} currentBalance={parseInt(user.balance.amount)} />
                   <Button className="h-24 flex-col" variant="outline" onClick={() => {}}>
                     <CreditCard className="w-6 h-6 mb-2" />
                     Pay Bills
