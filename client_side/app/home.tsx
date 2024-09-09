@@ -23,6 +23,7 @@ import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, Send, PlusCircle,
 import Sidebar from '@/components/sidebar/sidebar'
 import SendMoneyModal from '@/components/modals/sendMoneyModal'
 import AddMoneyModal from '@/components/modals/addMoneyModal'
+import PayBillsModal from '@/components/modals/payBillsModal'
 
 export default function MoneyTransferApp() {
   const [user, setUser] = useState<User | null>(null)
@@ -96,6 +97,36 @@ export default function MoneyTransferApp() {
       throw error
     }
   }
+
+  const handlePayBill = async (amount: number, billType: string, user: User) => {
+    setIsLoading(true);
+    // setError(null);
+  
+    try {
+      // Check if user has sufficient balance
+      if (amount > parseInt(user.balance.amount)) {
+        throw new Error('Insufficient balance');
+      }
+  
+      // Simulate paying the bill by deducting the amount from the balance
+      await api.addToBalance(-amount, "bill_payment");
+  
+      // Update local user state
+      const updatedUserData = await api.getProfile();
+      setUser(updatedUserData);
+  
+      // Create a transaction record for the bill payment
+      // const newTransaction = await api.createTransaction(amount, 0, "bill_payment", billType);
+      // setTransactions([newTransaction, ...transactions]);
+  
+      console.log(`Successfully paid ${billType} bill: $${amount}`);
+    } catch (error) {
+      // setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      throw error; // Re-throw the error so the modal can handle it
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading || !user) {
     return (
@@ -214,10 +245,7 @@ export default function MoneyTransferApp() {
                 <div className="grid grid-cols-2 gap-4">
                   <SendMoneyModal onSendMoney={handleSendMoney} currentBalance={parseInt(user.balance.amount)} />
                   <AddMoneyModal onAddMoney={handleAddMoney} currentBalance={parseInt(user.balance.amount)} />
-                  <Button className="h-24 flex-col" variant="outline" onClick={() => {}}>
-                    <CreditCard className="w-6 h-6 mb-2" />
-                    Pay Bills
-                  </Button>
+                  <PayBillsModal onPayBill={handleAddMoney} currentBalance={parseInt(user.balance.amount)} />
                   <Button className="h-24 flex-col" variant="outline" onClick={() => {}}>
                     <DollarSign className="w-6 h-6 mb-2" />
                     Investments
