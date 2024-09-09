@@ -1,18 +1,18 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./client_side
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    # env_file:
-    #   - ./.env
-    volumes:
-      - ./client_side/app:/src/src
-    depends_on:
-      - backend
+  # frontend:
+  #   build:
+  #     context: ./client_side
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   # env_file:
+  #   #   - ./.env
+  #   volumes:
+  #     - ./client_side/app:/src/src
+  #   depends_on:
+  #     - backend
 
   backend:
     build: ./server_side
