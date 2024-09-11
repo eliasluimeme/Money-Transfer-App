@@ -61,7 +61,7 @@ export default function AddMoneyModal({ onAddMoney, currentBalance }: AddMoneyMo
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full h-24 flex-col" variant="outline">
+        <Button className="h-24 flex-col bg-purple-700 hover:bg-purple-600 text-white" variant="outline">
           <PlusCircle className="w-6 h-6 mb-2" />
           Add Money
         </Button>

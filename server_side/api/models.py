@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -68,6 +69,15 @@ class Transaction(models.Model):
         escrow = self.escrow
         escrow.status = 'RELEASED'
         escrow.save()
+
+class Expenses(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='expenses')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    receiver = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name='received_expenses')
+    date = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.username}'s expenses: {self.amount}"
 
 class Escrow(models.Model):
     STATUSES = (

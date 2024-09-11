@@ -65,7 +65,7 @@ export default function PayBillsModal({ onPayBill, currentBalance }: PayBillsMod
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full h-24 flex-col" variant="outline">
+        <Button className="h-24 flex-col bg-purple-700 hover:bg-purple-600 text-white" variant="outline">
           <Receipt className="w-6 h-6 mb-2" />
           Pay Bills
         </Button>

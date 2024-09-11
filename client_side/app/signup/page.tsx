@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-700 to-purple-900">
       <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg">
         <div className="text-center">
           <Image
