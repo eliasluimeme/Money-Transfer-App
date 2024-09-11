@@ -456,6 +456,7 @@ import SendMoneyModal from '@/components/modals/sendMoneyModal'
 import AddMoneyModal from '@/components/modals/addMoneyModal'
 import PayBillsModal from '@/components/modals/payBillsModal'
 import InvestmentModal from '@/components/modals/inverstementsModal'
+import Sidebar from '@/components/sidebar/sidebar'
 
 export default function MoneyTransferApp() {
   const [user, setUser] = useState<User | null>(null)
@@ -549,42 +550,8 @@ export default function MoneyTransferApp() {
   ]
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-purple-700 to-purple-900 text-white">
-      <aside className="w-64 bg-purple-800 p-6">
-        <h1 className="text-2xl font-bold mb-8">MoneyApp</h1>
-        <nav className="space-y-4">
-          <a href="#" className="flex items-center text-white hover:text-purple-200">
-            <Home className="w-5 h-5 mr-3" />
-            Dashboard
-          </a>
-          <a href="#" className="flex items-center text-white hover:text-purple-200">
-            <Send className="w-5 h-5 mr-3" />
-            Transfer
-          </a>
-          <a href="#" className="flex items-center text-white hover:text-purple-200">
-            <History className="w-5 h-5 mr-3" />
-            Transactions
-          </a>
-          <a href="#" className="flex items-center text-white hover:text-purple-200">
-            <CreditCard className="w-5 h-5 mr-3" />
-            Cards
-          </a>
-        </nav>
-        <div className="absolute bottom-0 left-0 w-64 p-6">
-          <a href="#" className="flex items-center text-white hover:text-purple-200 mb-4">
-            <Settings className="w-5 h-5 mr-3" />
-            Settings
-          </a>
-          <button onClick={() => {
-            localStorage.removeItem('access_token')
-            localStorage.removeItem('refresh_token')
-            router.push('/login')
-          }} className="flex items-center text-white hover:text-purple-200">
-            <LogOut className="w-5 h-5 mr-3" />
-            Log out
-          </button>
-        </div>
-      </aside>
+    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-purple-200 to-purple-700 text-white">
+      <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
@@ -601,7 +568,7 @@ export default function MoneyTransferApp() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="bg-purple-800 text-white shadow-lg">
+            <Card className="bg-purple-700 text-white shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Total Balance</CardTitle>
               </CardHeader>
@@ -613,25 +580,27 @@ export default function MoneyTransferApp() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-purple-800 text-white shadow-lg">
+
+            <Card className="bg-purple-100 text-white shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg font-medium">Income</CardTitle>
+                <CardTitle className="text-lg font-medium text-purple-700">Income</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-300">$7,920</div>
-                <div className="flex items-center mt-2 text-green-300">
+                <div className="text-3xl font-bold text-green-500">$7,920</div>
+                <div className="flex items-center mt-2 text-green-500">
                   <ArrowUpRight className="w-4 h-4 mr-1" />
                   <span>+10.2%</span>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-purple-800 text-white shadow-lg">
+
+            <Card className="bg-purple-100 text-white shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg font-medium">Expenses</CardTitle>
+                <CardTitle className="text-lg font-medium text-purple-700">Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-300">$3,248</div>
-                <div className="flex items-center mt-2 text-red-300">
+                <div className="text-3xl font-bold text-red-500">$3,248</div>
+                <div className="flex items-center mt-2 text-red-500">
                   <ArrowDownRight className="w-4 h-4 mr-1" />
                   <span>-5.1%</span>
                 </div>
@@ -640,7 +609,7 @@ export default function MoneyTransferApp() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <Card className="lg:col-span-2 bg-purple-800 text-white shadow-lg">
+            <Card className="lg:col-span-2 bg-purple-300 text-white shadow-lg">
               <CardHeader>
                 <CardTitle>Financial Overview</CardTitle>
               </CardHeader>
@@ -670,13 +639,13 @@ export default function MoneyTransferApp() {
               </CardContent>
             </Card>
 
-            <Card className="bg-purple-800 text-white shadow-lg">
+            <Card className="bg-purple-700 text-white shadow-lg">
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className='text-xl mb-4'>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <InvestmentModal onInvest={handleInvest} currentBalance={parseInt(user.balance.amount)} />
+                  <SendMoneyModal onSendMoney={handleSendMoney} currentBalance={parseInt(user.balance.amount)} />
                   <AddMoneyModal onAddMoney={handleAddMoney} currentBalance={parseInt(user.balance.amount)} />
                   <PayBillsModal onPayBill={handlePayBill} currentBalance={parseInt(user.balance.amount)} />
                   <InvestmentModal onInvest={handleInvest} currentBalance={parseInt(user.balance.amount)} />
@@ -685,7 +654,7 @@ export default function MoneyTransferApp() {
             </Card>
           </div>
 
-          <Card className="bg-purple-800 text-white shadow-lg">
+          <Card className="bg-purple-500 text-white shadow-lg">
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>

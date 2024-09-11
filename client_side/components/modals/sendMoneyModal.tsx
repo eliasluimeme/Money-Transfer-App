@@ -3,74 +3,80 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DollarSign, TrendingUp, ArrowRight, BarChart2, Briefcase, Building, Bitcoin } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Send, DollarSign, User, ArrowRight } from 'lucide-react'
 
-type InvestmentOption = {
-  id: string
-  name: string
-  type: string
-  riskLevel: 'Low' | 'Medium' | 'High'
-  potentialReturn: string
-  icon: React.ReactNode
+type User = {
+  id: number
+  username: string
+  email: string
 }
 
-type InvestmentModalProps = {
-  onInvest: (amount: number, investmentType: string) => Promise<void>
+type SendMoneyModalProps = {
+  onSendMoney: (amount: number, recipientId: number) => Promise<void>
   currentBalance: number
 }
 
-export default function InvestmentModal({ onInvest, currentBalance }: InvestmentModalProps) {
+export default function SendMoneyModal({ onSendMoney, currentBalance }: SendMoneyModalProps) {
   const [amount, setAmount] = useState('')
-  const [investmentType, setInvestmentType] = useState('')
+  const [recipient, setRecipient] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [step, setStep] = useState(1)
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false) // Track if the modal is open
 
-  const investmentOptions: InvestmentOption[] = [
-    { id: 'stocks', name: 'Stock Market Index Fund', type: 'Stocks', riskLevel: 'Medium', potentialReturn: '7-10% p.a.', icon: <BarChart2 className="w-6 h-6" /> },
-    { id: 'bonds', name: 'Government Bonds', type: 'Bonds', riskLevel: 'Low', potentialReturn: '2-5% p.a.', icon: <Briefcase className="w-6 h-6" /> },
-    { id: 'realestate', name: 'Real Estate Investment Trust', type: 'Real Estate', riskLevel: 'Medium', potentialReturn: '5-8% p.a.', icon: <Building className="w-6 h-6" /> },
-    { id: 'crypto', name: 'Cryptocurrency Fund', type: 'Crypto', riskLevel: 'High', potentialReturn: '20%+ p.a.', icon: <Bitcoin className="w-6 h-6" /> },
+  // Mock recent recipients (replace with actual data in a real app)
+  const recentRecipients: User[] = [
+    { id: 1, username: 'Alice', email: 'alice@example.com' },
+    { id: 2, username: 'Bob', email: 'bob@example.com' },
+    { id: 3, username: 'Charlie', email: 'charlie@example.com' },
   ]
 
+  // Function to reset modal state
   const resetModalState = () => {
     setAmount('')
-    setInvestmentType('')
+    setRecipient('')
     setError('')
     setStep(1)
     setIsLoading(false)
   }
 
-  const handleInvest = async () => {
+  const handleSendMoney = async () => {
     setError('')
     setIsLoading(true)
 
-    if (!amount || !investmentType) {
-      setError('Please enter an amount and select an investment type')
+    if (!amount || !recipient) {
+      setError('Please enter an amount and recipient')
       setIsLoading(false)
       return
     }
 
-    const investmentAmount = parseFloat(amount)
-    if (isNaN(investmentAmount) || investmentAmount <= 0) {
+    const amountNum = parseFloat(amount)
+    if (isNaN(amountNum) || amountNum <= 0) {
       setError('Please enter a valid amount')
       setIsLoading(false)
       return
     }
 
-    if (investmentAmount > currentBalance) {
+    if (amountNum > currentBalance) {
       setError('Insufficient funds')
       setIsLoading(false)
       return
     }
 
+    const recipientId = parseInt(recipient)
+    if (isNaN(recipientId)) {
+      setError('Invalid recipient')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      await onInvest(investmentAmount, investmentType)
-      resetModalState()
-      setIsOpen(false)
+      await onSendMoney(amountNum, recipientId)
+      resetModalState() // Reset the state after sending money
+      setIsOpen(false)  // Close the modal
     } catch (error) {
-      setError('Failed to process investment. Please try again.')
+      setError('Failed to send money. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -79,27 +85,27 @@ export default function InvestmentModal({ onInvest, currentBalance }: Investment
   const handleNext = () => {
     if (step === 1 && amount && parseFloat(amount) > 0) {
       setStep(2)
-    } else if (step === 2 && investmentType) {
-      handleInvest()
+    } else if (step === 2 && recipient) {
+      handleSendMoney()
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       setIsOpen(open)
-      if (!open) resetModalState()
+      if (!open) resetModalState() // Reset the modal state when closing
     }}>
       <DialogTrigger asChild>
-        <Button className="h-24 flex-col bg-white hover:bg-purple-600 text-black hover:text-white">
-          <TrendingUp className="w-6 h-6 mb-2" />
-          Invest
+        <Button className="h-24 flex-col bg-white hover:bg-purple-600 text-black">
+          <Send className="w-6 h-6 mb-2" />
+          Send Money
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-white">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center text-gray-800">Invest</DialogTitle>
-          <DialogDescription className="text-center text-gray-600">
-            {step === 1 ? "Enter the amount you want to invest" : "Choose an investment option"}
+          <DialogTitle className="text-2xl font-bold text-center">Send Money</DialogTitle>
+          <DialogDescription className="text-center">
+            {step === 1 ? "Enter the amount you want to send" : "Choose a recipient"}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6">
@@ -123,39 +129,34 @@ export default function InvestmentModal({ onInvest, currentBalance }: Investment
           )}
           {step === 2 && (
             <div className="space-y-4">
-              <Label className="text-sm text-gray-500 mb-2 block">Investment Options</Label>
-              <div className="grid grid-cols-1 gap-4">
-                {investmentOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setInvestmentType(option.id)}
-                    className={`flex items-center p-4 rounded-lg transition-colors ${
-                      investmentType === option.id ? 'bg-purple-100 border-2 border-purple-500' : 'hover:bg-gray-100 border border-gray-200'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-full mr-4 ${
-                      option.riskLevel === 'Low' ? 'bg-green-100 text-green-600' :
-                      option.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-600' :
-                      'bg-red-100 text-red-600'
-                    }`}>
-                      {option.icon}
-                    </div>
-                    <div className="flex-grow text-left">
-                      <p className="font-medium text-gray-800">{option.name}</p>
-                      <p className="text-xs text-gray-500">{option.type}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-800">{option.potentialReturn}</p>
-                      <p className={`text-xs font-medium ${
-                        option.riskLevel === 'Low' ? 'text-green-600' :
-                        option.riskLevel === 'Medium' ? 'text-yellow-600' :
-                        'text-red-600'
-                      }`}>
-                        {option.riskLevel} Risk
-                      </p>
-                    </div>
-                  </button>
-                ))}
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="recipient"
+                  type="text"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="pl-10"
+                  placeholder="Recipient ID or username"
+                />
+              </div>
+              <div>
+                <Label className="text-sm text-gray-500 mb-2 block">Recent Recipients</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {recentRecipients.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => setRecipient(user.id.toString())}
+                      className="flex flex-col items-center space-y-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.username}`} alt={user.username} />
+                        <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium text-center">{user.username}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -165,10 +166,10 @@ export default function InvestmentModal({ onInvest, currentBalance }: Investment
           <Button 
             type="submit" 
             onClick={handleNext} 
-            disabled={isLoading || (step === 1 && !amount) || (step === 2 && !investmentType)}
+            disabled={isLoading || (step === 1 && !amount) || (step === 2 && !recipient)}
             className="w-full bg-purple-700 hover:bg-purple-600 text-white"
           >
-            {isLoading ? 'Processing...' : step === 1 ? 'Next' : 'Invest'}
+            {isLoading ? 'Processing...' : step === 1 ? 'Next' : 'Send Money'}
             {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </DialogFooter>
