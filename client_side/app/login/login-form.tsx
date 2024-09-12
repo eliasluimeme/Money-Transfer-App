@@ -18,9 +18,16 @@ export default function LoginForm() {
     e.preventDefault()
     setIsLoading(true)
     try {
+      if (localStorage.getItem("access_token") && localStorage.getItem("refresh_token")) {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+      }
+      
       const { user, tokens } = await api.login(username, password)
+
       localStorage.setItem('access_token', tokens.access)
       localStorage.setItem('refresh_token', tokens.refresh)
+
       router.push('/')
     } catch (error) {
       console.error('Login error:', error)
