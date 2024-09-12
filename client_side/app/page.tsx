@@ -1,9 +1,9 @@
-import Home from './home';
+import Dashboard from './dashboard/dashboard';
 
 export default function Page() {
   return (
     <div className="w-full min-h-screen">
-      <Home />
+      <Dashboard />
     </div>
   );
 }

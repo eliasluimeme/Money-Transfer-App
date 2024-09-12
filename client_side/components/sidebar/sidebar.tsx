@@ -14,15 +14,15 @@ export default function Sidebar() {
     <aside className="w-64 bg-purple-800 p-6 flex flex-col h-screen">
       <h1 className="text-3xl font-bold mb-10 text-white">OnBank</h1>
       <nav className="space-y-6 flex-grow">
-        <a href="#" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
+        <a href="/" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
           <Home className="w-5 h-5 mr-3" />
           Dashboard
         </a>
-        <a href="#" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
+        <a href="/transfer" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
           <Send className="w-5 h-5 mr-3" />
           Transfer
         </a>
-        <a href="#" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
+        <a href="/transactions" className="flex items-center text-purple-200 hover:text-white transition-colors duration-200">
           <History className="w-5 h-5 mr-3" />
           Transactions
         </a>

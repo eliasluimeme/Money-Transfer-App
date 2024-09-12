@@ -34,61 +34,41 @@ export default function EditProfile() {
 
     return (
         <TabsContent value="edit-profile">
-              <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
-                <CardContent className="p-6">
-                  <form onSubmit={handleSave} className="space-y-6">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="w-24 h-24 border-4 border-purple-200">
-                        <AvatarImage src="/placeholder-avatar.jpg" alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <Button type="button" variant="outline" size="sm" className="bg-purple-50 hover:bg-purple-100">
-                        <Camera className="mr-2 h-4 w-4" />
-                        Change Avatar
-                      </Button>
+          <Card className="bg-white shadow-xl rounded-2xl overflow-hidden border-t-4 border-purple-500">
+            <CardContent className="p-8">
+              <form onSubmit={handleSave} className="space-y-8">
+                <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                  <Avatar className="w-32 h-32 border-4 border-purple-200 rounded-full">
+                    <AvatarImage src="/placeholder-avatar.jpg" alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <Button type="button" variant="outline" size="lg" className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300">
+                    <Camera className="mr-2 h-5 w-5" />
+                    Change Avatar
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {Object.entries(user).map(([key, value]) => (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={key} className="text-sm font-medium text-purple-800 uppercase tracking-wide">
+                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      </Label>
+                      <Input
+                        id={key}
+                        name={key}
+                        value={value}
+                        onChange={handleInputChange}
+                        className="border-2 border-purple-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-medium text-purple-800">Your Name</Label>
-                        <Input id="name" name="name" value={user.name} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="username" className="text-sm font-medium text-purple-800">User Name</Label>
-                        <Input id="username" name="username" value={user.username} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-medium text-purple-800">Email</Label>
-                        <Input id="email" name="email" type="email" value={user.email} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="dateOfBirth" className="text-sm font-medium text-purple-800">Date of Birth</Label>
-                        <Input id="dateOfBirth" name="dateOfBirth" type="date" value={user.dateOfBirth} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="presentAddress" className="text-sm font-medium text-purple-800">Present Address</Label>
-                        <Input id="presentAddress" name="presentAddress" value={user.presentAddress} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="permanentAddress" className="text-sm font-medium text-purple-800">Permanent Address</Label>
-                        <Input id="permanentAddress" name="permanentAddress" value={user.permanentAddress} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="city" className="text-sm font-medium text-purple-800">City</Label>
-                        <Input id="city" name="city" value={user.city} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="postalCode" className="text-sm font-medium text-purple-800">Postal Code</Label>
-                        <Input id="postalCode" name="postalCode" value={user.postalCode} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="country" className="text-sm font-medium text-purple-800">Country</Label>
-                        <Input id="country" name="country" value={user.country} onChange={handleInputChange} className="border-purple-200 focus:border-purple-400 focus:ring-purple-400" />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white">Save Changes</Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  ))}
+                </div>
+                <Button type="submit" size="lg" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200">
+                  Save Changes
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
     )
 }

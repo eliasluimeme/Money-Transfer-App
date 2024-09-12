@@ -436,8 +436,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, Transaction } from './types'
-import { api } from './services/api'
+import { User, Transaction } from '../types'
+import { api } from '../services/api'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -459,7 +459,7 @@ import InvestmentModal from '@/components/modals/inverstementsModal'
 import Sidebar from '@/components/sidebar/sidebar'
 import ProfileModal from '@/components/modals/profileModal'
 
-export default function MoneyTransferApp() {
+export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
