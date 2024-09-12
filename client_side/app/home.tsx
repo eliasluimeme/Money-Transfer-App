@@ -457,6 +457,7 @@ import AddMoneyModal from '@/components/modals/addMoneyModal'
 import PayBillsModal from '@/components/modals/payBillsModal'
 import InvestmentModal from '@/components/modals/inverstementsModal'
 import Sidebar from '@/components/sidebar/sidebar'
+import ProfileModal from '@/components/modals/profileModal'
 
 export default function MoneyTransferApp() {
   const [user, setUser] = useState<User | null>(null)
@@ -531,6 +532,12 @@ export default function MoneyTransferApp() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    router.push('/login')
+  }
+
   if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-700 to-purple-900">
@@ -550,57 +557,58 @@ export default function MoneyTransferApp() {
   ]
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-purple-200 to-purple-700 text-white">
+    <div className="flex h-screen bg-gradient-to-br from-purple-100 to-white text-purple-900">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
+      <main className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Welcome back, {user.username}</h2>
+            <h2 className="text-3xl font-bold text-purple-800">Welcome back, {user.username}</h2>
             <div className="flex items-center space-x-4">
-              <button className="text-white hover:text-purple-200 transition-colors">
+              <button className="text-purple-600 hover:text-purple-800 transition-colors">
                 <Bell className="w-6 h-6" />
               </button>
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${user.username}`} alt={user.username} />
-                <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <ProfileModal 
+                user={{
+                  username: user.username,
+                  avatarUrl: `https://api.dicebear.com/6.x/initials/svg?seed=${user.username}`
+                }}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="bg-purple-700 text-white shadow-lg">
+            <Card className="bg-purple-700 text-white">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Total Balance</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">${user.balance.amount.toLocaleString()}</div>
-                <div className="flex items-center mt-2 text-green-300">
+                <div className="flex items-center mt-2 text-purple-200">
                   <ArrowUpRight className="w-4 h-4 mr-1" />
                   <span>+2.5%</span>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="bg-purple-100 text-white shadow-lg">
+            <Card className="bg-white">
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-purple-700">Income</CardTitle>
+                <CardTitle className="text-lg font-medium text-purple-800">Income</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-500">$7,920</div>
-                <div className="flex items-center mt-2 text-green-500">
+                <div className="text-3xl font-bold text-green-600">$7,920</div>
+                <div className="flex items-center mt-2 text-green-600">
                   <ArrowUpRight className="w-4 h-4 mr-1" />
                   <span>+10.2%</span>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="bg-purple-100 text-white shadow-lg">
+            <Card className="bg-white">
               <CardHeader>
-                <CardTitle className="text-lg font-medium text-purple-700">Expenses</CardTitle>
+                <CardTitle className="text-lg font-medium text-purple-800">Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-500">$3,248</div>
-                <div className="flex items-center mt-2 text-red-500">
+                <div className="text-3xl font-bold text-red-600">$3,248</div>
+                <div className="flex items-center mt-2 text-red-600">
                   <ArrowDownRight className="w-4 h-4 mr-1" />
                   <span>-5.1%</span>
                 </div>
@@ -609,9 +617,9 @@ export default function MoneyTransferApp() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <Card className="lg:col-span-2 bg-purple-300 text-white shadow-lg">
+            <Card className="lg:col-span-2 bg-white">
               <CardHeader>
-                <CardTitle>Financial Overview</CardTitle>
+                <CardTitle className="text-purple-800">Financial Overview</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
@@ -619,29 +627,29 @@ export default function MoneyTransferApp() {
                     <AreaChart data={chartData}>
                       <defs>
                         <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" stroke="#fff" />
-                      <YAxis stroke="#fff" />
-                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-                      <Tooltip contentStyle={{ backgroundColor: '#ffffff', color: '#000' }} />
-                      <Area type="monotone" dataKey="income" stroke="#8884d8" fillOpacity={1} fill="url(#colorIncome)" />
-                      <Area type="monotone" dataKey="expenses" stroke="#82ca9d" fillOpacity={1} fill="url(#colorExpenses)" />
+                      <XAxis dataKey="name" stroke="#6b21a8" />
+                      <YAxis stroke="#6b21a8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <Tooltip contentStyle={{ backgroundColor: '#ffffff', color: '#4c1d95' }} />
+                      <Area type="monotone" dataKey="income" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorIncome)" />
+                      <Area type="monotone" dataKey="expenses" stroke="#10b981" fillOpacity={1} fill="url(#colorExpenses)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-purple-700 text-white shadow-lg">
+            <Card className="bg-purple-600 text-white">
               <CardHeader>
-                <CardTitle className='text-xl mb-4'>Quick Actions</CardTitle>
+                <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -654,31 +662,31 @@ export default function MoneyTransferApp() {
             </Card>
           </div>
 
-          <Card className="bg-purple-500 text-white shadow-lg">
+          <Card className="bg-white">
             <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle className="text-purple-800">Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="all">
-                <TabsList className="mb-4 bg-purple-700">
-                  <TabsTrigger value="all" className="data-[state=active]:bg-purple-600 text-white">All</TabsTrigger>
-                  <TabsTrigger value="income" className="data-[state=active]:bg-purple-600 text-white">Income</TabsTrigger>
-                  <TabsTrigger value="expenses" className="data-[state=active]:bg-purple-600 text-white">Expenses</TabsTrigger>
+                <TabsList className="mb-4 bg-purple-100">
+                  <TabsTrigger value="all" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">All</TabsTrigger>
+                  <TabsTrigger value="income" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Income</TabsTrigger>
+                  <TabsTrigger value="expenses" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">Expenses</TabsTrigger>
                 </TabsList>
                 <TabsContent value="all">
                   {transactions.slice(0, 5).map((transaction, index) => (
-                    <div key={index} className="flex items-center justify-between py-4 border-b border-purple-700 last:border-b-0">
+                    <div key={index} className="flex items-center justify-between py-4 border-b border-purple-100 last:border-b-0">
                       <div className="flex items-center">
                         <Avatar className="w-10 h-10 mr-4">
                           <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${transaction.receiver_username}`} alt={transaction.receiver_username} />
                           <AvatarFallback>{transaction.receiver_username[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{transaction.receiver_username}</div>
-                          <div className="text-sm text-purple-300">{new Date(transaction.created_at).toLocaleDateString()}</div>
+                          <div className="font-medium text-purple-800">{transaction.receiver_username}</div>
+                          <div className="text-sm text-purple-500">{new Date(transaction.created_at).toLocaleDateString()}</div>
                         </div>
                       </div>
-                      <div className={`font-medium ${transaction.sender === user.id ? 'text-red-300' : 'text-green-300'}`}>
+                      <div className={`font-medium ${transaction.sender === user.id ? 'text-red-600' : 'text-green-600'}`}>
                         {transaction.sender === user.id ? '-' : '+'}${transaction.amount}
                       </div>
                     </div>
