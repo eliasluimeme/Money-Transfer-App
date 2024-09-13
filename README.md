@@ -8,7 +8,7 @@ Start by cloning the project repository:
 
 ```bash
 git clone git@github.com:eliasluimeme/Money-Transfer-App.git
-cd yourproject
+cd Money-transfer-app
 ```
 
 2. Docker Compose:
